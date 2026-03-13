@@ -1,4 +1,3 @@
-// Dashboard.jsx
 import { useContext } from "react";
 import { AuthContext } from "./AuthContext";
 
@@ -22,7 +21,7 @@ const Dashboard = () => {
 
         <button
           onClick={handleLogout}
-          className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-md transition-colors"
+          className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-md transition-colors cursor-pointer"
         >
           Logout
         </button>
