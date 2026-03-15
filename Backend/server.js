@@ -4,27 +4,38 @@ const jwt = require('jsonwebtoken')
 require('dotenv').config()
 const verifyToken = require('./middleware/authMiddleware.js')
 const cookieParser = require("cookie-parser");
+const csrf = require('csurf');
 
 const app = express()
 const PORT = process.env.PORT || 5000
 const SECRET_KEY = process.env.SECRET_KEY
 
-//Middleware
+// Middleware
 app.use(express.json())
-// Right after const app = express()
+app.use(cookieParser())
+
+// CORS
 app.use(cors({
   origin: 'http://localhost:5173',
-  credentials: true 
+  credentials: true
 }));
 
-app.use(cookieParser())
+// CSRF protection
+// cookie mode
+const csrfProtection = csrf({ cookie: true });
+
+// Send CSRF token to client
+app.get('/csrf-token', csrfProtection, (req, res) => {
+    res.json({ csrfToken: req.csrfToken() })
+})
 
 const user = {
     username: 'Subin',
     password: '1234'
 }
 
-app.post('/login', (req, res) => {
+// Login route
+app.post('/login', csrfProtection, (req, res) => {
     const { username, password } = req.body
 
     if (!username || !password) {
@@ -45,8 +56,8 @@ app.post('/login', (req, res) => {
 
     res.cookie("token", token, {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax",        
+        secure: false,   
+        sameSite: "lax",
         maxAge: 60 * 60 * 1000,
         path: '/'
     })
@@ -57,7 +68,8 @@ app.post('/login', (req, res) => {
     })
 })
 
-app.post('/logout', (req, res) => {
+// Logout route
+app.post('/logout', csrfProtection, (req, res) => {
     res.clearCookie("token", {
         path: '/',
         sameSite: 'lax'
@@ -65,6 +77,7 @@ app.post('/logout', (req, res) => {
     res.json({ message: 'Logged out successfully' })
 })
 
+// Protected profile route
 app.get('/profile', verifyToken, (req, res) => {
     return res.status(200).json({
         message: 'Protected Route',
