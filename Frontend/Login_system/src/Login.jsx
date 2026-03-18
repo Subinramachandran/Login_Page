@@ -44,7 +44,7 @@ const Login = () => {
             className="w-full p-2 border"
           />
 
-          <button className="w-full bg-blue-500 text-white p-2">
+          <button className="w-full bg-blue-500 text-white p-2 cursor-pointer">
             Login
           </button>
         </form>

@@ -1,94 +1,142 @@
-const express = require('express')
-const cors = require('cors')
-const jwt = require('jsonwebtoken')
-require('dotenv').config()
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
 const cookieParser = require("cookie-parser");
+const jwt = require('jsonwebtoken');
 const csrf = require('csurf');
-const verifyToken = require('./middleware/authMiddleware')
-const refreshRoute = require('./routes/refresh')
+const bcrypt = require('bcrypt');
+const connectDB = require('./config/db');
+const User = require('./models/User');
+const verifyToken = require('./middleware/authMiddleware');
 
-const app = express()
-const PORT = process.env.PORT || 5000
-const SECRET_KEY = process.env.SECRET_KEY
+const app = express();
+const PORT = 5000;
+const SECRET_KEY = process.env.SECRET_KEY;
 
+// ---------------------
 // Middleware
-app.use(express.json())
-app.use(cookieParser())
+// ---------------------
+app.use(express.json());
+app.use(cookieParser());
 
-// CORS
+// CORS (frontend localhost:5173)
 app.use(cors({
   origin: 'http://localhost:5173',
   credentials: true
 }));
 
-// CSRF (cookie mode)
+// CSRF protection
 const csrfProtection = csrf({
   cookie: {
     httpOnly: true,
     sameSite: 'lax',
     secure: false
   }
-})
+});
 
-// 👉 CSRF TOKEN ROUTE (ONLY THIS USES csrfProtection)
+// ---------------------
+// CSRF TOKEN
+// ---------------------
 app.get('/csrf-token', csrfProtection, (req, res) => {
-  res.json({ csrfToken: req.csrfToken() })
-})
+  res.json({ csrfToken: req.csrfToken() });
+});
 
-const user = {
-  username: 'Subin',
-  password: '1234'
-}
+// ---------------------
+// LOGIN ROUTE
+// ---------------------
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
 
-// ✅ LOGIN (NO CSRF here to avoid issues)
-app.post('/login', (req, res) => {
-  const { username, password } = req.body
+  const user = await User.findOne({ username });
+  if (!user) return res.status(401).json({ message: "Invalid user" });
 
-  if (username !== user.username || password !== user.password) {
-    return res.status(401).json({ message: 'Invalid credentials' })
-  }
+  const isMatch = await bcrypt.compare(password, user.passwordHash);
+  if (!isMatch) return res.status(401).json({ message: "Wrong password" });
 
-  const accessToken = jwt.sign({ username }, SECRET_KEY, { expiresIn: "15m" })
-  const refreshToken = jwt.sign({ username }, SECRET_KEY, { expiresIn: "7d" })
+  // Access Token (short-lived)
+  const accessToken = jwt.sign({ username }, SECRET_KEY, { expiresIn: "15m" });
 
-  // Access Token
+  // Refresh Token (long-lived)
+  const refreshToken = jwt.sign({ username }, SECRET_KEY, { expiresIn: "7d" });
+
+  // Send cookies to client
   res.cookie("token", accessToken, {
     httpOnly: true,
     sameSite: "lax",
     secure: false,
-    maxAge: 15 * 60 * 1000
-  })
+    maxAge: 15 * 60 * 1000, // 15 min
+    path: '/'
+  });
 
-  // Refresh Token
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     sameSite: "lax",
     secure: false,
-    maxAge: 7 * 24 * 60 * 60 * 1000
-  })
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: '/'
+  });
 
-  res.json({ message: "Login success" })
-})
+  res.json({ message: "Login success" });
+});
 
-// ✅ LOGOUT (CSRF REQUIRED)
-app.post('/logout', csrfProtection, (req, res) => {
-  res.clearCookie("token")
-  res.clearCookie("refreshToken")
+// ---------------------
+// REFRESH TOKEN ROUTE
+// ---------------------
+app.post('/refresh', csrfProtection, (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
 
-  res.json({ message: "Logged out" })
-})
+  if (!refreshToken) return res.status(401).json({ message: "No refresh token" });
 
-// ✅ PROTECTED ROUTE
+  try {
+    const userData = jwt.verify(refreshToken, SECRET_KEY);
+
+    // New Access Token
+    const newAccessToken = jwt.sign({ username: userData.username }, SECRET_KEY, { expiresIn: "15m" });
+
+    res.cookie("token", newAccessToken, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+      maxAge: 15 * 60 * 1000,
+      path: '/'
+    });
+
+    res.json({ message: "Token refreshed" });
+
+  } catch (err) {
+    return res.status(403).json({ message: "Invalid refresh token" });
+  }
+});
+
+// ---------------------
+// PROFILE ROUTE (protected)
+// ---------------------
 app.get('/profile', verifyToken, (req, res) => {
   res.json({
-    message: "Protected route",
+    message: "Profile data fetched successfully",
     user: req.user
-  })
-})
+  });
+});
 
-// ✅ REFRESH ROUTE
-app.use('/refresh', refreshRoute)
+// ---------------------
+// LOGOUT ROUTE
+// ---------------------
+app.post('/logout', (req, res) => {
+  // Clear both access and refresh token cookies
+  res.clearCookie('token', { httpOnly: true, sameSite: 'lax', secure: false, path: '/' });
+  res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'lax', secure: false, path: '/' });
 
-app.listen(PORT, () => {
-  console.log(`Server running on ${PORT}`)
-})
+  res.json({ message: "Logout success" });
+});
+
+// ---------------------
+// START SERVER
+// ---------------------
+const startServer = async () => {
+  await connectDB();
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on ${PORT}`);
+  });
+};
+
+startServer();
