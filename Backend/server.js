@@ -2,9 +2,10 @@ const express = require('express')
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
-const verifyToken = require('./middleware/authMiddleware.js')
 const cookieParser = require("cookie-parser");
 const csrf = require('csurf');
+const verifyToken = require('./middleware/authMiddleware')
+const refreshRoute = require('./routes/refresh')
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -20,71 +21,74 @@ app.use(cors({
   credentials: true
 }));
 
-// CSRF protection
-// cookie mode
-const csrfProtection = csrf({ cookie: true });
+// CSRF (cookie mode)
+const csrfProtection = csrf({
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false
+  }
+})
 
-// Send CSRF token to client
+// 👉 CSRF TOKEN ROUTE (ONLY THIS USES csrfProtection)
 app.get('/csrf-token', csrfProtection, (req, res) => {
-    res.json({ csrfToken: req.csrfToken() })
+  res.json({ csrfToken: req.csrfToken() })
 })
 
 const user = {
-    username: 'Subin',
-    password: '1234'
+  username: 'Subin',
+  password: '1234'
 }
 
-// Login route
-app.post('/login', csrfProtection, (req, res) => {
-    const { username, password } = req.body
+// ✅ LOGIN (NO CSRF here to avoid issues)
+app.post('/login', (req, res) => {
+  const { username, password } = req.body
 
-    if (!username || !password) {
-        return res.status(400).json({
-            success: false,
-            message: 'Empty credentials'
-        })
-    }
+  if (username !== user.username || password !== user.password) {
+    return res.status(401).json({ message: 'Invalid credentials' })
+  }
 
-    if (username !== user.username || password !== user.password) {
-        return res.status(401).json({
-            success: false,
-            message: 'Invalid credentials'
-        })
-    }
+  const accessToken = jwt.sign({ username }, SECRET_KEY, { expiresIn: "15m" })
+  const refreshToken = jwt.sign({ username }, SECRET_KEY, { expiresIn: "7d" })
 
-    const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: "1h" })
+  // Access Token
+  res.cookie("token", accessToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: false,
+    maxAge: 15 * 60 * 1000
+  })
 
-    res.cookie("token", token, {
-        httpOnly: true,
-        secure: false,   
-        sameSite: "lax",
-        maxAge: 60 * 60 * 1000,
-        path: '/'
-    })
+  // Refresh Token
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: false,
+    maxAge: 7 * 24 * 60 * 60 * 1000
+  })
 
-    return res.status(200).json({
-        success: true,
-        message: 'Login successful'
-    })
+  res.json({ message: "Login success" })
 })
 
-// Logout route
+// ✅ LOGOUT (CSRF REQUIRED)
 app.post('/logout', csrfProtection, (req, res) => {
-    res.clearCookie("token", {
-        path: '/',
-        sameSite: 'lax'
-    })
-    res.json({ message: 'Logged out successfully' })
+  res.clearCookie("token")
+  res.clearCookie("refreshToken")
+
+  res.json({ message: "Logged out" })
 })
 
-// Protected profile route
+// ✅ PROTECTED ROUTE
 app.get('/profile', verifyToken, (req, res) => {
-    return res.status(200).json({
-        message: 'Protected Route',
-        user: req.user
-    })
+  res.json({
+    message: "Protected route",
+    user: req.user
+  })
 })
+
+// ✅ REFRESH ROUTE
+app.use('/refresh', refreshRoute)
 
 app.listen(PORT, () => {
-    console.log(`Server is listening ${PORT}`)
+  console.log(`Server running on ${PORT}`)
 })
