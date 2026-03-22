@@ -16,7 +16,7 @@ const Login = () => {
     const res = await login(username, password);
 
     if (res.success) {
-      navigate("/dashboard");
+      navigate("/dashboard", {replace: true});
     } else {
       setMessage(res.message);
     }

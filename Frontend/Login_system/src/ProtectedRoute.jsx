@@ -7,7 +7,8 @@ const ProtectedRoute = ({ children }) => {
 
   if (loading) return <p>Loading...</p>; // wait for profile check
 
-  if (!profile) return <Navigate to="/login" />; // not logged in
+  // not logged in → redirect to login and replace history
+  if (!profile) return <Navigate to="/login" replace />; 
 
   return children; // logged in
 };
