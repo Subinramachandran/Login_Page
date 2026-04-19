@@ -6,15 +6,16 @@ import { processQueue, addQueue, isTokenRefreshing, setRefreshing } from './Refr
 const isLoginPage = () => window.location.pathname === '/login'
 
 export const responseSuccess = response => {
-
+    console.log("success interceptor")
+    console.log('Status', response.status)
+    console.log('Data', response.data)
     if (response.data?.success === false) {
         const message = response.data.message ?? 'Failed'
 
-        console.log('TOAST:', message)
         ToastService.error(message)
 
         return Promise.reject({
-            response: response   // ✅ IMPORTANT FIX
+            response: response
         })
     }
 
@@ -22,50 +23,49 @@ export const responseSuccess = response => {
 }
 
 export const responseError = async error => {
+    console.log('Error interceptor')
+    console.log('Error', error)
+    console.log('Status', error?.response?.status)
+    console.log('Message', error?.response?.data?.message)
     if (!error.response) {
         ToastService.error('Server is not reachable')
         return Promise.reject(error)
     }
 
-    const s = error.response.status
+    const status = error.response.status
     const req = error.config
     const isLogin = req.url?.includes('/login')
     const isRefresh = req.url?.includes('/refresh')
-   
+
     // Login error
-    if (s === 401 && isLogin) {
+    if (status === 401 && isLogin) {
         ToastService.error(error.response?.data?.message || 'Invalid credentials')
         return Promise.reject(error)
     }
 
-    // Refresh തന്നെ fail ആയാൽ logout
     if (isRefresh) {
-        onAuthError?.()
-        navigate?.('/login')
+        getAuthErrorHandler()?.()
+        getNavigate()?.('/login')
         return Promise.reject(error)
     }
 
-    // 401 അല്ലാത്ത മറ്റ് errors
-    if (s !== 401) {
-        handleOtherErrors(s, error.response?.data?.message)
+    if (status !== 401) {
+        handleOtherErrors(status, error.response?.data?.message)
         return Promise.reject(error)
     }
 
-    // 👈 Login page ആണെങ്കിൽ refresh attempt ചെയ്യരുത്
     if (isLoginPage()) {
         return Promise.reject(error)
     }
 
-    // Infinite loop തടയുക
     if (req._retry) {
-        onAuthError?.()
-        navigate?.('/login')
+        getAuthErrorHandler()?.()
+        getNavigate()?.('/login')
         return Promise.reject(error)
     }
 
     req._retry = true
 
-    // നിലവിൽ refresh നടക്കുകയാണെങ്കിൽ queue-ൽ ചേർക്കുക
     if (isTokenRefreshing()) {
         return new Promise((resolve, reject) => {
             addQueue(resolve, reject)
@@ -88,8 +88,8 @@ export const responseError = async error => {
         ToastService.error('Session expired. Please login again')
 
         processQueue(err, null)
-        onAuthError?.()
-        navigate?.('/login')
+        getAuthErrorHandler()?.()
+        getNavigate()?.('/login')
 
         return Promise.reject(err)
     }
