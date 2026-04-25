@@ -5,7 +5,7 @@ const cookieParser = require('cookie-parser')
 const csrf = require('csurf')
 const bcrypt = require('bcrypt')
 const connectDB = require('./config/db')
-const User = require('./models/User') // ✅ FIX: missing import
+const User = require('./models/User')
 require('dotenv').config()
 
 const verifyToken = require('./middleware/authMiddleware.js')
