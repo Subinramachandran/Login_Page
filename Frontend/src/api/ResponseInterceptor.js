@@ -25,8 +25,8 @@ export const responseSuccess = response => {
 export const responseError = async error => {
     console.log('Error interceptor')
     console.log('Error', error)
-    console.log('Status', error?.response?.status)
-    console.log('Message', error?.response?.data?.message)
+    console.log('Status', error.response?.status)
+    console.log('Message', error.response?.data?.message)
     if (!error.response) {
         ToastService.error('Server is not reachable')
         return Promise.reject(error)

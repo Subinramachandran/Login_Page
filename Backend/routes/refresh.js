@@ -1,37 +1,51 @@
 const express = require('express')
-const router = express.Router()
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
 
-const SECRET_KEY = process.env.SECRET_KEY
+const router = express.Router()
 
-router.post('/', (req, res) => {
-  const refreshToken = req.cookies.refreshToken
+router.post('/refresh', (req, res) => {
+  const refreshToken = req.cookies?.refreshToken
+  console.log('Refresh token', refreshToken)
 
   if (!refreshToken) {
     return res.status(401).json({ message: 'No refresh token' })
   }
 
   try {
-    const userData = jwt.verify(refreshToken, SECRET_KEY)
-
-    const newAccessToken = jwt.sign(
-      { username: userData.username },
-      SECRET_KEY,
-      { expiresIn: "15m" }
+    // ✅ verify refresh token (NOT access secret)
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET
     )
 
-    res.cookie("token", newAccessToken, {
+    // create new access token
+    const newAccessToken = jwt.sign(
+      { username: decoded.username },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+    )
+
+    // optional (BEST PRACTICE → store in cookie)
+    res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
-      sameSite: "lax",
       secure: false,
+      sameSite: "lax",
+      path: '/',
       maxAge: 15 * 60 * 1000
     })
 
-    res.json({ message: "Token refreshed" })
+    return res.json({
+      success: true,
+      accessToken: newAccessToken,
+      message: 'Token refreshed successfully'
+    })
 
-  } catch (err) {
-    return res.status(403).json({ message: "Invalid refresh token" })
+  } catch (error) {
+    return res.status(403).json({
+      success: false,
+      message: 'Invalid refresh token'
+    })
   }
 })
 

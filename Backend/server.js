@@ -1,142 +1,174 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const cookieParser = require("cookie-parser");
-const jwt = require('jsonwebtoken');
-const csrf = require('csurf');
-const bcrypt = require('bcrypt');
-const connectDB = require('./config/db');
-const User = require('./models/User');
-const verifyToken = require('./middleware/authMiddleware');
+const express = require('express')
+const cors = require('cors')
+const jwt = require('jsonwebtoken')
+const cookieParser = require('cookie-parser')
+const csrf = require('csurf')
+const bcrypt = require('bcrypt')
+const connectDB = require('./config/db')
+const User = require('./models/User') // ✅ FIX: missing import
+require('dotenv').config()
 
-const app = express();
-const PORT = 5000;
-const SECRET_KEY = process.env.SECRET_KEY;
+const verifyToken = require('./middleware/authMiddleware.js')
+const refreshRoute = require('./routes/refresh')
+
+const app = express()
+const PORT = process.env.PORT || 5000
+
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET
 
 // ---------------------
 // Middleware
 // ---------------------
-app.use(express.json());
-app.use(cookieParser());
-
-// CORS (frontend localhost:5173)
 app.use(cors({
   origin: 'http://localhost:5173',
   credentials: true
-}));
+}))
 
-// CSRF protection
+app.use(express.json())
+app.use(cookieParser())
+
+// =========================
+// CSRF CONFIG 
+// =========================
 const csrfProtection = csrf({
   cookie: {
     httpOnly: true,
-    sameSite: 'lax',
-    secure: false
+    secure: false,
+    sameSite: "lax"
   }
-});
+})
 
-// ---------------------
-// CSRF TOKEN
-// ---------------------
+// =========================
+// CSRF TOKEN ROUTE 
+// =========================
 app.get('/csrf-token', csrfProtection, (req, res) => {
-  res.json({ csrfToken: req.csrfToken() });
-});
+  res.json({
+    csrfToken: req.csrfToken()
+  })
+})
+
+// apply refresh route
+app.use(refreshRoute)
 
 // ---------------------
-// LOGIN ROUTE
+// LOGIN (FIXED)
 // ---------------------
-app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-
-  const user = await User.findOne({ username });
-  if (!user) return res.status(401).json({ message: "Invalid user" });
-
-  const isMatch = await bcrypt.compare(password, user.passwordHash);
-  if (!isMatch) return res.status(401).json({ message: "Wrong password" });
-
-  // Access Token (short-lived)
-  const accessToken = jwt.sign({ username }, SECRET_KEY, { expiresIn: "15m" });
-
-  // Refresh Token (long-lived)
-  const refreshToken = jwt.sign({ username }, SECRET_KEY, { expiresIn: "7d" });
-
-  // Send cookies to client
-  res.cookie("token", accessToken, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: false,
-    maxAge: 15 * 60 * 1000, // 15 min
-    path: '/'
-  });
-
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: false,
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    path: '/'
-  });
-
-  res.json({ message: "Login success" });
-});
-
-// ---------------------
-// REFRESH TOKEN ROUTE
-// ---------------------
-app.post('/refresh', csrfProtection, (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
-
-  if (!refreshToken) return res.status(401).json({ message: "No refresh token" });
-
+app.post(`/login`, async (req, res) => {
   try {
-    const userData = jwt.verify(refreshToken, SECRET_KEY);
+    const { username, password } = req.body
 
-    // New Access Token
-    const newAccessToken = jwt.sign({ username: userData.username }, SECRET_KEY, { expiresIn: "15m" });
+    if (!username || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Empty credentials'
+      })
+    }
 
-    res.cookie("token", newAccessToken, {
+    // ✅ FIX: fetch user FIRST
+    const user = await User.findOne({ username })
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid user'
+      })
+    }
+
+    // check password
+    const isMatch = await bcrypt.compare(password, user.passwordHash)
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Wrong password'
+      })
+    }
+
+    const accessToken = jwt.sign(
+      { username: user.username },
+      ACCESS_TOKEN_SECRET,
+      { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+    )
+
+    const refreshToken = jwt.sign(
+      { username: user.username },
+      REFRESH_TOKEN_SECRET,
+      { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
+    )
+
+    res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      sameSite: "lax",
       secure: false,
-      maxAge: 15 * 60 * 1000,
-      path: '/'
-    });
+      sameSite: "lax",
+      path: '/',
+      maxAge: 60 * 60 * 1000
+    })
 
-    res.json({ message: "Token refreshed" });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    })
+
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful'
+    })
 
   } catch (err) {
-    return res.status(403).json({ message: "Invalid refresh token" });
+    console.error(err)
+    return res.status(500).json({
+      success: false,
+      message: 'Server error'
+    })
   }
-});
+})
 
 // ---------------------
-// PROFILE ROUTE (protected)
+// PROFILE (PROTECTED)
 // ---------------------
-app.get('/profile', verifyToken, (req, res) => {
-  res.json({
-    message: "Profile data fetched successfully",
+app.get(`/profile`, verifyToken, (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Protected Route',
     user: req.user
-  });
-});
+  })
+})
 
-// ---------------------
-// LOGOUT ROUTE
-// ---------------------
-app.post('/logout', (req, res) => {
-  // Clear both access and refresh token cookies
-  res.clearCookie('token', { httpOnly: true, sameSite: 'lax', secure: false, path: '/' });
-  res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'lax', secure: false, path: '/' });
+// =========================
+// LOGOUT (CSRF PROTECTED)
+// =========================
+app.post(`/logout`, csrfProtection, (req, res) => {
 
-  res.json({ message: "Logout success" });
-});
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    path: '/'
+  })
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    path: '/'
+  })
+
+  res.status(200).json({
+    success: true,
+    message: 'Logged out successfully'
+  })
+})
 
 // ---------------------
 // START SERVER
 // ---------------------
 const startServer = async () => {
-  await connectDB();
+  await connectDB()
   app.listen(PORT, () => {
-    console.log(`🚀 Server running on ${PORT}`);
-  });
-};
+    console.log(`🚀 Server running on ${PORT}`)
+  })
+}
 
-startServer();
+startServer()
