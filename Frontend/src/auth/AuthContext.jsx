@@ -40,6 +40,15 @@ export const AuthProvider = ({ children }) => {
             return
         }
 
+        const publicRoutes = ['/login', '/signup']
+        const isPublicRoute = publicRoutes.includes(location.pathname)
+
+        if (isPublicRoute) {
+            dispatch({ type: 'SET_PROFILE', payload: null })
+            return
+        }
+
+
         try {
             const res = await API.get('/profile')
             dispatch({ type: 'SET_PROFILE', payload: res.data.user })
@@ -51,6 +60,35 @@ export const AuthProvider = ({ children }) => {
         }
 
     }, [location.pathname])
+
+    // =========================
+    // SIGNUP
+    // =========================
+    const handleSignup = async (username, password) => {
+        try {
+            const res = await API.post('/signup', {
+                username,
+                password
+            })
+
+            if (res.data?.success) {
+
+                ToastService.success(res.data.message ?? 'Signup successful')
+
+                // 👉 optional: auto login
+                await handleLogin(username, password)
+
+                // OR if you don't want auto login:
+                // navigate('/login')
+
+            } else {
+                ToastService.error(res.data?.message ?? 'Signup failed')
+            }
+
+        } catch (error) {
+            ToastService.error(error.response?.data?.message ?? 'Signup error')
+        }
+    }
 
     // =========================
     // LOGIN
@@ -65,7 +103,6 @@ export const AuthProvider = ({ children }) => {
 
             if (response.data?.success) {
 
-                await getCsrfToken()   // ensure CSRF ready
                 await getProfile()
 
                 navigate('/dashboard')
@@ -127,6 +164,7 @@ export const AuthProvider = ({ children }) => {
     return (
         <AuthContext.Provider value={{
             handleLogin,
+            handleSignup,
             logout,
             profile: state.profile,
             loading: state.loading,

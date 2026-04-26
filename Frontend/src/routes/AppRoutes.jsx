@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import Signup from '../pages/Signup'
 import Login from '../pages/Login'
 import Dashboard from '../pages/Dashboard'
 import { AuthContext } from '../auth/AuthContext'
@@ -14,14 +15,25 @@ const AppRoutes = () => {
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={profile ? (<Navigate to="/dashboard" replace />)
                 : (<Login />)} />
+
+            <Route
+                path="/signup"
+                element={
+                    profile
+                        ? <Navigate to="/dashboard" replace />
+                        : <Signup />
+                }
+            />
+
             <Route
                 path="/dashboard"
                 element={
                     <ProtectedRoute>
-                        <Dashboard replace />
+                        <Dashboard />
                     </ProtectedRoute>
                 }
             />
+
             {/* Wildcard routes */}
             <Route
                 path="*"

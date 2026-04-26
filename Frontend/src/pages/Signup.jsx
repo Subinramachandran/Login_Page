@@ -1,25 +1,31 @@
-import { AuthContext } from '../auth/AuthContext'
-import { useContext, useState } from 'react'
-import { useNavigate } from "react-router-dom"
+import { useContext, useState } from "react"
+import { AuthContext } from "../auth/AuthContext"
 
-const Login = () => {
-    const { handleLogin } = useContext(AuthContext)
+const Signup = () => {
+
+    const { handleSignup } = useContext(AuthContext)
+
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
-    const navigate = useNavigate()
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        await handleLogin(username, password)
+        await handleSignup(username, password)
     }
 
     return (
         <div className="flex justify-center items-center min-h-screen">
-            <div className="mt-4 p-2 shadow-lg">
+            <div className="mt-4 p-4 shadow-lg rounded-lg w-80">
+
                 <form onSubmit={handleSubmit}>
-                    <h1 className="p-2 text-4xl font-bold text-center text-blue-600">Login</h1>
+
+                    <h1 className="p-2 text-4xl font-bold text-center text-blue-600">
+                        Signup
+                    </h1>
+
                     <input
                         type="text"
+                        placeholder="Username"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         className="mt-4 p-2 rounded-lg w-full border"
@@ -27,6 +33,7 @@ const Login = () => {
 
                     <input
                         type="password"
+                        placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="mt-4 p-2 w-full rounded-lg border"
@@ -34,22 +41,16 @@ const Login = () => {
 
                     <button
                         type="submit"
-                        className="mt-4 p-2 border rounded-lg bg-blue-600 text-white w-full font-bold cursor-pointer"
+                        className="mt-4 p-2 border rounded-lg bg-green-600 text-white w-full font-bold"
                     >
-                        Login
+                        Register
                     </button>
-                    <p className="text-center mt-4">
-                        Don't have an account?{" "}
-                        <span
-                            onClick={() => navigate('/signup')}
-                            className="text-blue-600 cursor-pointer"
-                        >
-                            Signup
-                        </span>
-                    </p>
+
                 </form>
+
             </div>
         </div>
     )
 }
-export default Login
+
+export default Signup
