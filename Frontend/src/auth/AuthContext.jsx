@@ -1,5 +1,5 @@
 import ToastService from '../services/ToastService'
-import { createContext, useEffect, useReducer, useCallback } from 'react'
+import { createContext, useEffect, useReducer } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 import API, { getCsrfToken } from '../api/ApiInstance'
@@ -13,14 +13,19 @@ const initialState = {
 }
 
 const reducer = (state, action) => {
+    switch (action.type) {
+        case 'SET_PROFILE':
+            return { profile: action.payload, loading: false }
 
-    if (action.type === 'SET_PROFILE')
-        return { profile: action.payload, loading: false }
+        case 'RESET':
+            return { profile: null, loading: false }
 
-    if (action.type === 'RESET')
-        return { profile: null, loading: false }
+        case 'SET_LOADING':
+            return { ...state, loading: true }
 
-    return state
+        default:
+            return state
+    }
 }
 
 export const AuthProvider = ({ children }) => {
@@ -30,7 +35,18 @@ export const AuthProvider = ({ children }) => {
     const navigate = useNavigate()
     const location = useLocation()
 
-    const getProfile = useCallback(async () => {
+    // =========================
+    // CSRF INIT (RUN ONLY ONCE)
+    // =========================
+    useEffect(() => {
+        getCsrfToken()
+    }, [])
+
+    // =========================
+    // PROFILE FETCH (ROUTE BASED)
+    // =========================
+    useEffect(() => {
+
         const publicRoutes = ['/login', '/signup']
 
         if (publicRoutes.includes(location.pathname)) {
@@ -38,12 +54,18 @@ export const AuthProvider = ({ children }) => {
             return
         }
 
-        try {
-            const res = await API.get('/profile')
-            dispatch({ type: 'SET_PROFILE', payload: res.data.user })
-        } catch (error) {
-            dispatch({ type: 'RESET' })
+        const fetchProfile = async () => {
+            dispatch({ type: 'SET_LOADING' })
+
+            try {
+                const res = await API.get('/profile')
+                dispatch({ type: 'SET_PROFILE', payload: res.data.user })
+            } catch (error) {
+                dispatch({ type: 'RESET' })
+            }
         }
+
+        fetchProfile()
 
     }, [location.pathname])
 
@@ -52,20 +74,13 @@ export const AuthProvider = ({ children }) => {
     // =========================
     const handleSignup = async (username, password) => {
         try {
-            const res = await API.post('/signup', {
-                username,
-                password
-            })
+            const res = await API.post('/signup', { username, password })
 
             if (res.data?.success) {
-
                 ToastService.success(res.data.message ?? 'Signup successful')
 
-                // 👉 optional: auto login
+                // 👉 Auto login after signup
                 await handleLogin(username, password)
-
-                // OR if you don't want auto login:
-                // navigate('/login')
 
             } else {
                 ToastService.error(res.data?.message ?? 'Signup failed')
@@ -82,14 +97,13 @@ export const AuthProvider = ({ children }) => {
     const handleLogin = async (username, password) => {
 
         try {
-            const response = await API.post('/login', {
-                username,
-                password
-            })
+            const response = await API.post('/login', { username, password })
 
             if (response.data?.success) {
 
-                await getProfile()
+                // 👉 directly fetch profile (no race condition)
+                const res = await API.get('/profile')
+                dispatch({ type: 'SET_PROFILE', payload: res.data.user })
 
                 navigate('/dashboard')
 
@@ -98,7 +112,7 @@ export const AuthProvider = ({ children }) => {
             }
 
         } catch (error) {
-            console.log(error)
+            ToastService.error(error.response?.data?.message ?? 'Login error')
         }
     }
 
@@ -118,21 +132,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     // =========================
-    // INIT
-    // =========================
-    useEffect(() => {
-
-        const init = async () => {
-            await getCsrfToken()
-            await getProfile()
-        }
-
-        init()
-
-    }, [getProfile])
-
-    // =========================
-    // AUTH HANDLER
+    // GLOBAL AUTH HANDLER
     // =========================
     useEffect(() => {
 

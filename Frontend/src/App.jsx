@@ -7,7 +7,8 @@ const App = () => {
   return (
     <div>
       <ToastContainer position="top-center" />
-      <AppRoutes />      
+      <AppRoutes /> 
+     
     </div>
   )
 }
