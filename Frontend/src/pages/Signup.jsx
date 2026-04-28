@@ -1,9 +1,10 @@
 import { useContext, useState } from "react"
 import { AuthContext } from "../auth/AuthContext"
+import { ClipLoader } from "react-spinners"
 
 const Signup = () => {
 
-    const { handleSignup } = useContext(AuthContext)
+    const { handleSignup, loading } = useContext(AuthContext)
 
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
@@ -41,9 +42,14 @@ const Signup = () => {
 
                     <button
                         type="submit"
-                        className="mt-4 p-2 border rounded-lg bg-green-600 text-white w-full font-bold"
+                        disabled={loading}
+                        className="mt-4 p-2 border rounded-lg bg-green-600 text-white w-full font-bold flex justify-center items-center"
                     >
-                        Register
+                        {loading ? (
+                            <ClipLoader size={20} color="#fff" />
+                        ) : (
+                            "Register"
+                        )}
                     </button>
 
                 </form>

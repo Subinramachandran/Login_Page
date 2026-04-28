@@ -1,9 +1,10 @@
 import { AuthContext } from '../auth/AuthContext'
 import { useContext, useState } from 'react'
 import { useNavigate } from "react-router-dom"
+import { ClipLoader } from "react-spinners"
 
 const Login = () => {
-    const { handleLogin } = useContext(AuthContext)
+    const { handleLogin, loading } = useContext(AuthContext)
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const navigate = useNavigate()
@@ -34,10 +35,12 @@ const Login = () => {
 
                     <button
                         type="submit"
-                        className="mt-4 p-2 border rounded-lg bg-blue-600 text-white w-full font-bold cursor-pointer"
+                        disabled={loading}
+                        className="mt-4 p-2 border rounded-lg bg-blue-600 text-white w-full font-bold cursor-pointer flex justify-center items-center"
                     >
-                        Login
+                        {loading ? <ClipLoader size={20} color="#fff" /> : "Login"}
                     </button>
+
                     <p className="text-center mt-4">
                         Don't have an account?{" "}
                         <span
