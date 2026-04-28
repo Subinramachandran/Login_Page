@@ -30,33 +30,19 @@ export const AuthProvider = ({ children }) => {
     const navigate = useNavigate()
     const location = useLocation()
 
-    // =========================
-    // PROFILE
-    // =========================
     const getProfile = useCallback(async () => {
-
-        if (location.pathname === '/login') {
-            dispatch({ type: 'SET_PROFILE', payload: null })
-            return
-        }
-
         const publicRoutes = ['/login', '/signup']
-        const isPublicRoute = publicRoutes.includes(location.pathname)
 
-        if (isPublicRoute) {
+        if (publicRoutes.includes(location.pathname)) {
             dispatch({ type: 'SET_PROFILE', payload: null })
             return
         }
-
 
         try {
             const res = await API.get('/profile')
             dispatch({ type: 'SET_PROFILE', payload: res.data.user })
-
         } catch (error) {
-
             dispatch({ type: 'RESET' })
-
         }
 
     }, [location.pathname])
