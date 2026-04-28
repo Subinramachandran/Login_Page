@@ -1,6 +1,6 @@
 import { useContext, useState } from "react"
 import { AuthContext } from "../auth/AuthContext"
-import { ClipLoader } from "react-spinners"
+import { Oval } from "react-loader-spinner"
 
 const Signup = () => {
 
@@ -16,7 +16,7 @@ const Signup = () => {
 
     return (
         <div className="flex justify-center items-center min-h-screen">
-            <div className="mt-4 p-4 shadow-lg rounded-lg w-80">
+            <div className="mt-4 p-6 shadow-lg rounded-lg w-80">
 
                 <form onSubmit={handleSubmit}>
 
@@ -46,7 +46,13 @@ const Signup = () => {
                         className="mt-4 p-2 border rounded-lg bg-green-600 text-white w-full font-bold flex justify-center items-center"
                     >
                         {loading ? (
-                            <ClipLoader size={20} color="#fff" />
+                            <Oval
+                                height={20}
+                                width={20}
+                                color="#ffffff"
+                                visible={true}
+                                ariaLabel="loading"
+                            />
                         ) : (
                             "Register"
                         )}
