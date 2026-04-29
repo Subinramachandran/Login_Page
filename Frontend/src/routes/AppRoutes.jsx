@@ -5,6 +5,7 @@ import Dashboard from '../pages/Dashboard'
 import { AuthContext } from '../auth/AuthContext'
 import { useContext } from 'react'
 import ProtectedRoute from '../auth/ProtectedRoute'
+import DeleteAccount from '../pages/DeleteAccount'
 
 const AppRoutes = () => {
     const { profile, loading } = useContext(AuthContext)
@@ -30,6 +31,15 @@ const AppRoutes = () => {
                 element={
                     <ProtectedRoute>
                         <Dashboard />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/delete-account"
+                element={
+                    <ProtectedRoute>
+                        <DeleteAccount />
                     </ProtectedRoute>
                 }
             />

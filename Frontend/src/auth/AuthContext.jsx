@@ -128,7 +128,8 @@ export const AuthProvider = ({ children }) => {
         }
 
         dispatch({ type: 'RESET' })
-        navigate('/login')
+       
+        navigate('/login', {replace: true})
     }
 
     // =========================
