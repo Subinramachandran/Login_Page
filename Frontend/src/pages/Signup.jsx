@@ -1,6 +1,7 @@
 import { useContext, useState } from "react"
 import { AuthContext } from "../auth/AuthContext"
 import { Oval } from "react-loader-spinner"
+import { Link } from "react-router-dom"
 
 const Signup = () => {
 
@@ -16,7 +17,7 @@ const Signup = () => {
 
     return (
         <div className="flex justify-center items-center min-h-screen">
-            <div className="mt-4 p-6 shadow-lg rounded-lg w-80">
+            <div className="mt-4 p-6 shadow-lg rounded-lg">
 
                 <form onSubmit={handleSubmit}>
 
@@ -57,6 +58,14 @@ const Signup = () => {
                             "Register"
                         )}
                     </button>
+
+                    {/* LOGIN LINK */}
+                    <p className="mt-4 text-center">
+                        Already have an account?{" "}
+                        <Link to="/login" className="text-blue-600 font-semibold">
+                            Login
+                        </Link>
+                    </p>
 
                 </form>
 

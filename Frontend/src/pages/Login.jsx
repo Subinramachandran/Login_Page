@@ -16,7 +16,7 @@ const Login = () => {
 
     return (
         <div className="flex justify-center items-center min-h-screen">
-            <div className="mt-4 p-6 shadow-lg rounded-lg w-80">
+            <div className="mt-4 p-6 shadow-lg rounded-lg">
 
                 <form onSubmit={handleSubmit}>
 
