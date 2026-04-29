@@ -62,7 +62,7 @@ const Login = () => {
                         Don't have an account?{" "}
                         <span
                             onClick={() => navigate('/signup')}
-                            className="text-blue-600 cursor-pointer"
+                            className="text-blue-600 cursor-pointer font-semibold"
                         >
                             Signup
                         </span>
