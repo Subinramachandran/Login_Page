@@ -9,7 +9,7 @@ export default function DeleteAccount() {
 
     const handleDelete = async () => {
         try {
-            await API.delete('/auth/delete')
+            await API.delete('/delete-account')
 
             await logout()
             alert('Account deleted')
