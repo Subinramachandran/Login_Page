@@ -43,7 +43,7 @@ const Login = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="mt-4 p-2 border rounded-lg bg-blue-600 text-white w-full font-bold flex justify-center items-center"
+                        className="mt-4 p-2 border rounded-lg bg-blue-600 text-white w-full font-bold flex justify-center items-center cursor-pointer"
                     >
                         {loading ? (
                             <Oval
