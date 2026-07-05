@@ -1,58 +1,80 @@
-import { useContext } from 'react'
-import { AuthContext } from '../auth/AuthContext'
-import { Oval } from "react-loader-spinner"
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from "react";
 
 const Dashboard = () => {
-    const { profile, loading, logout } = useContext(AuthContext)
-    const navigate = useNavigate()
+  const [text, setText] = useState("")
+  const [items, setItem] = useState([])
 
-    // 🔴 Loading state
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center min-h-screen">
-                <Oval
-                    height={50}
-                    width={50}
-                    color="#2563eb"
-                    visible={true}
-                    ariaLabel="loading"
-                />
-            </div>
-        )
-    }
+  const addItem = () => {
+    const trimmedText = text.trim()
 
-    return (
-        <div className="flex justify-center items-center min-h-screen bg-gray-100">
-            <div className="bg-white shadow-lg rounded-2xl p-8 text-center w-100">
+    if (trimmedText === "") return
+    const newItems = [...items, trimmedText]
+    setItem(newItems)
+    setText("")    
+  }
+ 
 
-                <p className="p-2 text-2xl text-blue-600 font-semibold">
-                    Welcome, {profile?.username}
-                </p>
+  return (
+    <div className="min-h-screen bg-gray-100 flex justify-center items-center">
 
-                <div className="mt-6 flex flex-col gap-3">
+      <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
 
-                    {/* Logout */}
-                    <button
-                        onClick={logout}
-                        className="p-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition cursor-pointer"
-                    >
-                        Logout
-                    </button>
+        <h1 className="text-3xl font-bold text-center mb-6 text-blue-600">
+          Add Items
+        </h1>
 
-                    {/* Delete Account */}
-                    <button
-                        onClick={() => navigate('/delete-account', {replace: true})}
-                        className="p-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition cursor-pointer"
-                    >
-                        Delete Account
-                    </button>
+        {/* Input */}
 
-                </div>
+        <input
+          type="text"
+          placeholder="Enter item..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              addItem();
+            }
+          }}
+          className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
 
-            </div>
-        </div>
-    )
-}
+        {/* Button */}
 
-export default Dashboard
+        <button
+          onClick={addItem}
+          className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition cursor-pointer"
+        >
+          Add Item
+        </button>
+
+        {/* Total */}
+
+        <p className="mt-6 text-gray-600">
+          Total Items:
+          <span className="font-bold ml-2">
+            {items.length}
+          </span>
+        </p>
+
+        {/* List */}
+
+        <ul className="mt-4 space-y-2">
+
+          {items.map((item, index) => (
+            <li
+              key={index}
+              className="bg-gray-100 p-3 rounded-lg shadow-sm"
+            >
+              {item}
+            </li>
+          ))}
+
+        </ul>
+
+      </div>
+
+    </div>
+  );
+};
+
+export default Dashboard;
