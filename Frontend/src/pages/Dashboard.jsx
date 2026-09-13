@@ -76,7 +76,7 @@ const Dashboard = () => {
 
                         <button
                             onClick={handleSubmit}
-                            className="flex-1 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
+                            className="flex-1 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 cursor-pointer"
                         >
                             {editId !== null ? "Update" : "Add"}
                         </button>
@@ -84,7 +84,7 @@ const Dashboard = () => {
                         {editId !== null && (
                             <button
                                 onClick={handleCancel}
-                                className="px-5 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+                                className="px-5 bg-gray-500 text-white rounded-md hover:bg-gray-600 cursor-pointer"
                             >
                                 Cancel
                             </button>
@@ -113,14 +113,14 @@ const Dashboard = () => {
 
                                 <button
                                     onClick={() => handleEdit(item)}
-                                    className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                                    className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 cursor-pointer"
                                 >
                                     Edit
                                 </button>
 
                                 <button
                                     onClick={() => handleDelete(item.id)}
-                                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 cursor-pointer"
                                 >
                                     Delete
                                 </button>

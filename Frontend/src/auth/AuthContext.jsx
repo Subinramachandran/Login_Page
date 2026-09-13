@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }) => {
             if (res.data?.success) {
                 ToastService.success(res.data.message ?? 'Signup successful')
 
-                // 👉 Auto login after signup
+                // Auto login after signup
                 await handleLogin(username, password)
 
             } else {
