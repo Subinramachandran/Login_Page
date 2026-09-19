@@ -1,10 +1,17 @@
-import { useState } from "react"
+import { useState, useContext } from "react"
+import {AuthContext} from '../auth/AuthContext'
 
 const Dashboard = () => {
+    const {logout} = useContext(AuthContext)
     const [inputValue, setInputValue] = useState("")
     const [items, setItems] = useState([])
     const [editId, setEditId] = useState(null)
     const [search, setSearch] = useState("")
+
+    // Logout
+    const handleLogout = () => {
+        console.log("Logout clicked")
+    }
 
     // Add or Update item
     const handleSubmit = () => {
@@ -62,13 +69,25 @@ const Dashboard = () => {
 
             <div className="max-w-xl mx-auto">
 
-                {/* Dashboard Title */}
-                <h1 className="text-3xl font-bold text-center mb-6">
-                    My Dashboard
-                </h1>
+                {/* Header */}
+                <div className="flex justify-between items-center mb-6">
+
+                    <h1 className="text-3xl font-bold">
+                        My Dashboard
+                    </h1>
+
+                    <button
+                        onClick={logout}
+                        className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 cursor-pointer"
+                    >
+                        Logout
+                    </button>
+
+                </div>
 
                 {/* Search */}
                 <div className="mb-6">
+
                     <input
                         type="text"
                         placeholder="Search an item..."
@@ -76,6 +95,7 @@ const Dashboard = () => {
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-full bg-white border border-gray-300 rounded-md px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
                     />
+
                 </div>
 
                 {/* Add / Edit Form */}
@@ -108,6 +128,7 @@ const Dashboard = () => {
                         )}
 
                     </div>
+
                 </div>
 
                 {/* Items */}
@@ -120,12 +141,10 @@ const Dashboard = () => {
                             className="bg-white p-4 rounded-lg shadow flex justify-between items-center"
                         >
 
-                            {/* Item Name */}
                             <span className="text-lg font-medium">
                                 {item.name}
                             </span>
 
-                            {/* Buttons */}
                             <div className="flex gap-2">
 
                                 <button
@@ -148,14 +167,14 @@ const Dashboard = () => {
 
                     ))}
 
-                    {/* No items */}
+                    {/* Empty State */}
                     {items.length === 0 && (
                         <p className="text-center text-gray-500">
                             No items added yet.
                         </p>
                     )}
 
-                    {/* No search results */}
+                    {/* No Search Results */}
                     {items.length > 0 && filteredItems.length === 0 && (
                         <p className="text-center text-gray-500">
                             No matching items found.
