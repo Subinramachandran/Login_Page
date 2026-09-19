@@ -4,6 +4,7 @@ const Dashboard = () => {
     const [inputValue, setInputValue] = useState("")
     const [items, setItems] = useState([])
     const [editId, setEditId] = useState(null)
+    const [search, setSearch] = useState("")
 
     // Add or Update item
     const handleSubmit = () => {
@@ -51,6 +52,11 @@ const Dashboard = () => {
         setInputValue("")
     }
 
+    // Search filter
+    const filteredItems = items.filter((item) =>
+        item.name.toLowerCase().includes(search.toLowerCase())
+    )
+
     return (
         <div className="min-h-screen bg-gray-100 p-6">
 
@@ -60,6 +66,17 @@ const Dashboard = () => {
                 <h1 className="text-3xl font-bold text-center mb-6">
                     My Dashboard
                 </h1>
+
+                {/* Search */}
+                <div className="mb-6">
+                    <input
+                        type="text"
+                        placeholder="Search an item..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full bg-white border border-gray-300 rounded-md px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                    />
+                </div>
 
                 {/* Add / Edit Form */}
                 <div className="bg-white p-5 rounded-lg shadow-md mb-6">
@@ -96,7 +113,7 @@ const Dashboard = () => {
                 {/* Items */}
                 <div className="space-y-3">
 
-                    {items.map((item) => (
+                    {filteredItems.map((item) => (
 
                         <div
                             key={item.id}
@@ -131,10 +148,17 @@ const Dashboard = () => {
 
                     ))}
 
-                    {/* Empty State */}
+                    {/* No items */}
                     {items.length === 0 && (
                         <p className="text-center text-gray-500">
                             No items added yet.
+                        </p>
+                    )}
+
+                    {/* No search results */}
+                    {items.length > 0 && filteredItems.length === 0 && (
+                        <p className="text-center text-gray-500">
+                            No matching items found.
                         </p>
                     )}
 
