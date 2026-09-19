@@ -8,11 +8,6 @@ const Dashboard = () => {
     const [editId, setEditId] = useState(null)
     const [search, setSearch] = useState("")
 
-    // Logout
-    const handleLogout = () => {
-        console.log("Logout clicked")
-    }
-
     // Add or Update item
     const handleSubmit = () => {
         if (inputValue.trim() === "") return
