@@ -1,7 +1,6 @@
 import { toast } from "react-toastify"
 
 const ToastService = {
-
     success: (msg) =>
         toast.success(msg || "Success"),
 
@@ -15,43 +14,54 @@ const ToastService = {
         toast.info(msg || "Info"),
 
     confirm: (message, onConfirm) => {
+        toast(
+            ({ closeToast }) => (
+                <div className="w-72">
 
-        toast.warning(
-            <div>
-                <p className="mb-3">
-                    {message}
-                </p>
+                    <p className="text-sm font-semibold text-gray-800 mb-1">
+                        Confirm deletion
+                    </p>
 
-                <div className="flex gap-2">
+                    <p className="text-sm text-gray-500 mb-4">
+                        {message}
+                    </p>
 
-                    <button
-                        onClick={() => {
-                            toast.dismiss()
-                            onConfirm()
-                        }}
-                        className="bg-red-500 text-white px-3 py-1 rounded-lg cursor-pointer"
-                    >
-                        Yes
-                    </button>
+                    <div className="flex justify-end gap-2">
 
-                    <button
-                        onClick={() => {
-                            toast.dismiss()
-                        }}
-                        className="bg-gray-500 text-white px-3 py-1 rounded-lg cursor-pointer"
-                    >
-                        No
-                    </button>
+                        <button
+                            onClick={closeToast}
+                            className="px-3 py-1.5 text-sm rounded-md
+                                       border border-gray-300
+                                       text-gray-600
+                                       hover:bg-gray-100"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                closeToast()
+                                onConfirm()
+                            }}
+                            className="px-3 py-1.5 text-sm rounded-md
+                                       bg-red-500 text-white
+                                       hover:bg-red-600"
+                        >
+                            Delete
+                        </button>
+
+                    </div>
 
                 </div>
-            </div>,
+            ),
             {
                 autoClose: false,
-                closeOnClick: false
+                closeOnClick: false,
+                closeButton: false,
+                position: "top-center"
             }
         )
     }
-
 }
 
 export default ToastService

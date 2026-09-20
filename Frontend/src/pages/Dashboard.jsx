@@ -61,8 +61,7 @@ const Dashboard = () => {
     const handleDelete = (id) => {
 
         ToastService.confirm(
-            "Are you sure you want to delete this item?",
-
+            "This action cannot be undone.",
             () => {
                 setItems(
                     items.filter((item) => item.id !== id)
@@ -152,7 +151,7 @@ const Dashboard = () => {
                     {search && (
                         <button
                             onClick={handleClearSearch}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-500 hover:text-gray-800"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-500 hover:text-gray-800 font-bold cursor-pointer"
                         >
                             Clear
                         </button>
