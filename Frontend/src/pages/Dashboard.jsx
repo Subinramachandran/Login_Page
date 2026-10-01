@@ -2,6 +2,8 @@ import { useContext, useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { AuthContext } from "../auth/AuthContext"
 import ToastService from "../services/ToastService"
+import axios from 'axios'
+import API from '../api/ApiInstance'
 
 const Dashboard = () => {
     const { logout, profile } = useContext(AuthContext)
@@ -17,49 +19,65 @@ const Dashboard = () => {
 
     // LOAD ITEMS
     useEffect(() => {
-        try {
-            const savedItems =
-                localStorage.getItem(storageKey)
 
-            const parsedItems = savedItems
-                ? JSON.parse(savedItems)
-                : []
+        const loadTasks = async () => {
 
-            setItems(
-                Array.isArray(parsedItems)
-                    ? parsedItems
-                    : []
-            )
-        } catch (error) {
-            console.error(error)
+            try {
 
-            ToastService.error(
-                "Unable to load tasks"
-            )
+                const response = await API.get('/tasks')
 
-            setItems([])
-        } finally {
-            setIsLoading(false)
+                setItems(
+                    Array.isArray(response.data.tasks)
+                        ? response.data.tasks
+                        : []
+                )
+
+            } catch (error) {
+
+                console.error(error)
+
+                ToastService.error(
+                    'Unable to load tasks'
+                )
+
+                setItems([])
+
+            } finally {
+
+                setIsLoading(false)
+            }
         }
-    }, [storageKey])
+
+        loadTasks()
+
+    }, [])
 
     // SAVE ITEMS
     useEffect(() => {
+
         if (isLoading) return
 
-        try {
-            localStorage.setItem(
-                storageKey,
-                JSON.stringify(items)
-            )
-        } catch (error) {
-            console.error(error)
+        const saveTasks = async () => {
 
-            ToastService.error(
-                "Unable to save tasks"
-            )
+            try {
+
+                await API.post('/tasks', {
+                    tasks: items
+                })
+
+            } catch (error) {
+
+                console.error(error)
+
+                ToastService.error(
+                    'Unable to save tasks'
+                )
+            }
         }
-    }, [items, storageKey, isLoading])
+
+        saveTasks()
+
+    }, [items, isLoading])
 
     // STATISTICS
 
@@ -72,8 +90,8 @@ const Dashboard = () => {
 
     const completionRate = items.length
         ? Math.round(
-              (completedCount / items.length) * 100
-          )
+            (completedCount / items.length) * 100
+        )
         : 0
 
     // SEARCH + FILTER
@@ -147,9 +165,9 @@ const Dashboard = () => {
             currentItems.map((item) =>
                 item.id === editId
                     ? {
-                          ...item,
-                          name,
-                      }
+                        ...item,
+                        name,
+                    }
                     : item
             )
         )
@@ -205,10 +223,10 @@ const Dashboard = () => {
             currentItems.map((item) =>
                 item.id === id
                     ? {
-                          ...item,
-                          completed:
-                              !item.completed,
-                      }
+                        ...item,
+                        completed:
+                            !item.completed,
+                    }
                     : item
             )
         )
@@ -452,7 +470,7 @@ const Dashboard = () => {
                         </div>
 
                     ) : filteredItems.length ===
-                      0 ? (
+                        0 ? (
 
                         /* EMPTY STATE */
 
@@ -492,11 +510,10 @@ const Dashboard = () => {
                                                         item.id
                                                     )
                                                 }
-                                                className={`h-5 w-5 rounded border ${
-                                                    item.completed
-                                                        ? "border-green-500 bg-green-500"
-                                                        : "border-gray-400"
-                                                }`}
+                                                className={`h-5 w-5 rounded border ${item.completed
+                                                    ? "border-green-500 bg-green-500"
+                                                    : "border-gray-400"
+                                                    }`}
                                                 aria-label={
                                                     item.completed
                                                         ? "Mark as active"
@@ -507,11 +524,10 @@ const Dashboard = () => {
                                             <div>
 
                                                 <p
-                                                    className={`text-sm font-medium ${
-                                                        item.completed
-                                                            ? "text-gray-400 line-through"
-                                                            : "text-gray-700"
-                                                    }`}
+                                                    className={`text-sm font-medium ${item.completed
+                                                        ? "text-gray-400 line-through"
+                                                        : "text-gray-700"
+                                                        }`}
                                                 >
                                                     {
                                                         item.name
@@ -533,11 +549,10 @@ const Dashboard = () => {
                                         <div className="flex items-center gap-3">
 
                                             <span
-                                                className={`rounded-full px-3 py-1 text-xs font-medium ${
-                                                    item.completed
-                                                        ? "bg-green-100 text-green-700"
-                                                        : "bg-orange-100 text-orange-700"
-                                                }`}
+                                                className={`rounded-full px-3 py-1 text-xs font-medium ${item.completed
+                                                    ? "bg-green-100 text-green-700"
+                                                    : "bg-orange-100 text-orange-700"
+                                                    }`}
                                             >
                                                 {item.completed
                                                     ? "Completed"
